@@ -3,6 +3,7 @@ package com.example.expose.services;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
@@ -19,7 +20,8 @@ public class SimulationService {
 	
 		private final WebClient webClient;
 
-		private final String url = "http://localhost:8081";
+		@Value("${server.compute}")
+		private String url ;
 		
 		private final SimulationRedisRepoImpl redisRepoImpl;
 
