@@ -12,6 +12,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext.SerializationPair;
 
+
 import com.example.expose.dtos.SimulationDto;
 
 @SpringBootApplication
@@ -25,13 +26,18 @@ public class ExposeApplication {
 	
 	@Bean
 	public JedisConnectionFactory jedisConnectionFactory() {
-		return new JedisConnectionFactory();
+		JedisConnectionFactory jedisConnectionFactory = new JedisConnectionFactory();
+		jedisConnectionFactory.getPoolConfig().setMaxIdle(30);
+		jedisConnectionFactory.getPoolConfig().setMinIdle(10);	
+		return jedisConnectionFactory;
 	}
 	
 	@Bean
 	RedisTemplate<String, SimulationDto> redisTemplate() {
 		RedisTemplate<String, SimulationDto> redisTemplate = new RedisTemplate<String, SimulationDto>();
+		redisTemplate.setEnableTransactionSupport(true);
 		redisTemplate.setConnectionFactory(jedisConnectionFactory());
+		
 		return redisTemplate;
  	}
 
