@@ -28,6 +28,9 @@ public class SimulationRedisRepoImpl  {
 
     
     private String getId(SimulationDto dto) {
+    	System.out.println(dto.getAmount());
+    	System.out.println(dto.getPeriod());
+    	System.out.println(dto.getInterest());
 		return dto.getAmount().toString() + "-" + dto.getPeriod().toString() + "-" + dto.getInterest();
 	}
 

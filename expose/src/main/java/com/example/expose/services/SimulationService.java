@@ -1,61 +1,44 @@
-package com.example.expose.services;
+package com.example.expose;
 
-import java.util.List;
-import java.util.Map;
+import java.time.Duration;
 
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cache.annotation.EnableCaching;
+import org.springframework.context.annotation.Bean;
+import org.springframework.data.redis.cache.RedisCacheConfiguration;
+import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
+import org.springframework.data.redis.serializer.RedisSerializationContext.SerializationPair;
+
 
 import com.example.expose.dtos.SimulationDto;
-import com.example.expose.repositories.SimulationRedisRepoImpl;
 
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
-
-
-
-@Service
-public class SimulationService {
+@SpringBootApplication
+@EnableCaching
+public class ExposeApplication {
 	
-		private final WebClient webClient;
-
-		@Value("${server.compute}")
-		private String url ;
+	
+	public static void main(String[] args) {
+		SpringApplication.run(ExposeApplication.class, args);
+	}
+	
+	@Bean
+	public JedisConnectionFactory jedisConnectionFactory() {
+		JedisConnectionFactory jedisConnectionFactory = new JedisConnectionFactory();
+		jedisConnectionFactory.getPoolConfig().setMaxIdle(30);
+		jedisConnectionFactory.getPoolConfig().setMinIdle(10);	
+		return jedisConnectionFactory;
+	}
+	
+	@Bean
+	RedisTemplate<String, SimulationDto> redisTemplate() {
+		RedisTemplate<String, SimulationDto> redisTemplate = new RedisTemplate<String, SimulationDto>();
+		redisTemplate.setEnableTransactionSupport(true);
+		redisTemplate.setConnectionFactory(jedisConnectionFactory());
 		
-		private final SimulationRedisRepoImpl redisRepoImpl;
+		return redisTemplate;
+ 	}
 
-		public SimulationService(WebClient.Builder webClientBuilder, SimulationRedisRepoImpl redisRepoImpl ) {
-			super();
-			this.webClient = webClientBuilder.baseUrl(url).build();
-			this.redisRepoImpl = redisRepoImpl;
-
-		}
-		
-		public Mono<SimulationDto> calculateSimulation(SimulationDto dto) {
-			SimulationDto dtoOpt = redisRepoImpl.findById(dto);
-			if (dtoOpt != null) {
-				dtoOpt.setFromCach(true);
-			} else {
-				dtoOpt = webClient.post()
-				        .uri("/simulate/compute")
-				        .body(Mono.just(dto), SimulationDto.class)
-				        .retrieve()
-				        .bodyToMono(SimulationDto.class).block();
-				redisRepoImpl.save(dtoOpt);
-				
-			}
-			
-			return Mono.just(dtoOpt);
-
-		}
-
-		public Map<String, SimulationDto> getAllFromCash() {
-			// TODO Auto-generated method stub
-			return redisRepoImpl.findAll();
-		}
-
-		
-		
-		
 }
